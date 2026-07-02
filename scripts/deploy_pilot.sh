@@ -55,8 +55,8 @@ echo "==> Starting Docker Compose on remote"
 ssh "${DEPLOY_USER}@${DEPLOY_HOST}" bash -s <<REMOTE
 set -euo pipefail
 cd "${REMOTE_DIR}/infra"
-docker compose -f docker-compose.pilot.yml pull || true
-if ! docker compose -f docker-compose.pilot.yml up -d --build; then
+docker compose --env-file ../.env -f docker-compose.pilot.yml pull || true
+if ! docker compose --env-file ../.env -f docker-compose.pilot.yml up -d --build; then
   echo ""
   echo "Docker Compose failed."
   echo "If 80/443 are already in use, either:"
@@ -66,9 +66,12 @@ if ! docker compose -f docker-compose.pilot.yml up -d --build; then
   echo "     CADDY_HTTPS_BIND=8443"
   echo "     PILOT_API_BIND=127.0.0.1:18000"
   echo "Then proxy ${PUBLIC_DOMAIN} to http://127.0.0.1:8080 on the host."
+  echo ""
+  echo "If Caddy reports PUBLIC_DOMAIN is blank, ensure compose is started with:"
+  echo "  docker compose --env-file ../.env -f docker-compose.pilot.yml up -d --build"
   exit 1
 fi
-docker compose -f docker-compose.pilot.yml ps
+docker compose --env-file ../.env -f docker-compose.pilot.yml ps
 REMOTE
 
 echo ""

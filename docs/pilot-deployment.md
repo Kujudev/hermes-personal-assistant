@@ -34,7 +34,7 @@ chmod +x scripts/deploy_pilot.sh
 The script:
 1. Rsyncs code to `~/hermes-pilot` on the server
 2. Uploads `.env` securely via SCP
-3. Runs `docker compose -f infra/docker-compose.pilot.yml up -d --build`
+3. Runs `docker compose --env-file ../.env -f infra/docker-compose.pilot.yml up -d --build`
 
 ## Verify
 
@@ -126,11 +126,29 @@ If you prefer to bypass Hermes Caddy entirely, proxy directly to:
 http://127.0.0.1:18000
 ```
 
+### PUBLIC_DOMAIN blank / Caddy keeps restarting
+
+If `docker compose ps` shows `infra-caddy-1` restarting and logs say:
+
+```text
+server block without any key is global configuration
+```
+
+then Compose is not loading the parent `.env`, so `PUBLIC_DOMAIN` is blank.
+
+Start it like this from `~/hermes-pilot/infra`:
+
+```bash
+docker compose --env-file ../.env -f docker-compose.pilot.yml up -d --build
+docker compose --env-file ../.env -f docker-compose.pilot.yml ps
+```
+
 | Issue | Fix |
 |-------|-----|
 | SSH auth fails | Verify password/key; ensure `PasswordAuthentication yes` in `sshd_config` |
 | TLS fails | Confirm DNS propagated; check `docker logs infra-caddy-1` |
 | Port 80/443 already in use | Stop the existing listener or set `CADDY_HTTP_BIND=8080` and proxy to `127.0.0.1:8080` |
+| `PUBLIC_DOMAIN` blank / Caddy restarts | Start compose with `--env-file ../.env` |
 | LLM disabled | Set `DEEPSEEK_API_KEY` in `.env` and redeploy |
 | Reminders not firing | Check `docker logs infra-reminder-worker-1` |
 
