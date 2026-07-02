@@ -116,6 +116,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
         user_id = f"telegram-{chat_id}"
         now = datetime.now(ZoneInfo(settings.timezone))
+        chat_store.add(user_id, "user", text, now)
+        await _send_telegram_action(settings.telegram_bot_token, chat_id, "typing")
         try:
             outbound = gateway.inject(user_id, pilot_phone_hash(chat_id), text, now)
         except RuntimeError:
@@ -124,6 +126,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 (),
                 {"text": "Assistant is temporarily unavailable. Please try again."},
             )()
+        chat_store.add(user_id, "assistant", outbound.text, now)
         await _send_telegram_reply(settings.telegram_bot_token, chat_id, outbound.text)
         return JSONResponse({"ok": True})
 
@@ -147,6 +150,19 @@ async def _send_telegram_reply(bot_token: str, chat_id: str, text: str) -> None:
         urllib.request.urlopen(request, timeout=15)
     except Exception as exc:
         logger.error("Telegram send failed: %s", exc)
+
+
+async def _send_telegram_action(bot_token: str, chat_id: str, action: str) -> None:
+    import urllib.parse
+    import urllib.request
+
+    url = f"https://api.telegram.org/bot{bot_token}/sendChatAction"
+    payload = urllib.parse.urlencode({"chat_id": chat_id, "action": action}).encode()
+    request = urllib.request.Request(url, data=payload, method="POST")
+    try:
+        urllib.request.urlopen(request, timeout=15)
+    except Exception as exc:
+        logger.error("Telegram chat action failed: %s", exc)
 
 
 app = create_app()
