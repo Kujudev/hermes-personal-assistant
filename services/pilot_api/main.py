@@ -102,8 +102,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if not settings.telegram_bot_token:
             raise HTTPException(status_code=503, detail="Telegram not configured")
         token = request.headers.get("X-Telegram-Bot-Api-Secret-Token")
-        expected = settings.telegram_bot_token[-16:]
-        if token != expected:
+        expected = settings.telegram_webhook_secret or settings.telegram_bot_token[-16:]
+        if expected and token != expected:
             raise HTTPException(status_code=401, detail="Invalid telegram webhook token")
 
         message = update.message or {}

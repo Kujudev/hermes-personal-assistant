@@ -32,6 +32,17 @@ This is your **primary pilot interface** until WhatsApp is wired.
    ```
 4. Message your bot — same Hermes brain, familiar chat UX
 
+### Telegram notes
+
+- `TELEGRAM_BOT_TOKEN` is the bot token from BotFather
+- `TELEGRAM_WEBHOOK_SECRET` is your own shared secret; Hermes checks it against the incoming `X-Telegram-Bot-Api-Secret-Token` header
+- If you change either value, redeploy:
+
+```bash
+cd ~/hermes-pilot/infra
+docker compose --env-file ../.env -f docker-compose.pilot.yml up -d
+```
+
 ## 3. WhatsApp (later)
 
 When credentials arrive, add to `.env`:

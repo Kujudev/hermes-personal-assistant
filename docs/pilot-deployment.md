@@ -45,6 +45,136 @@ curl https://paserver.kujuhk.com/health
 
 Open `https://paserver.kujuhk.com` in your phone browser → Add to Home Screen.
 
+## Telegram setup
+
+If you already have the Telegram bot token:
+
+1. Put these in `~/hermes-pilot/.env`:
+
+```bash
+TELEGRAM_BOT_TOKEN=<your-bot-token>
+TELEGRAM_WEBHOOK_SECRET=<your-random-secret>
+```
+
+2. Redeploy or restart the API:
+
+```bash
+cd ~/hermes-pilot/infra
+docker compose --env-file ../.env -f docker-compose.pilot.yml up -d
+```
+
+3. Register the webhook with Telegram:
+
+```bash
+curl "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/setWebhook" \
+  -d "url=https://paserver.kujuhk.com/api/telegram/webhook" \
+  -d "secret_token=<TELEGRAM_WEBHOOK_SECRET>"
+```
+
+4. Send a message to your bot in Telegram.
+
+## Live logs
+
+### 1. Running service logs
+
+From the server:
+
+```bash
+cd ~/hermes-pilot/infra
+docker compose --env-file ../.env -f docker-compose.pilot.yml logs -f
+```
+
+Only API:
+
+```bash
+docker compose --env-file ../.env -f docker-compose.pilot.yml logs -f pilot-api
+```
+
+Only reminder worker:
+
+```bash
+docker compose --env-file ../.env -f docker-compose.pilot.yml logs -f reminder-worker
+```
+
+Only Caddy / TLS / proxy:
+
+```bash
+docker compose --env-file ../.env -f docker-compose.pilot.yml logs -f caddy
+```
+
+### 2. Conversation log
+
+Conversations are stored in SQLite at the path from `.env`:
+
+```bash
+DATABASE_PATH=/app/data/hermes.db
+```
+
+Inside the API container, inspect recent messages:
+
+```bash
+docker exec -it infra-pilot-api-1 python - <<'PY'
+import sqlite3
+conn = sqlite3.connect('/app/data/hermes.db')
+for row in conn.execute(\"SELECT role, content, created_at FROM chat_messages ORDER BY created_at DESC LIMIT 20\"):
+    print(row)
+PY
+```
+
+Recent reminders:
+
+```bash
+docker exec -it infra-pilot-api-1 python - <<'PY'
+import sqlite3
+conn = sqlite3.connect('/app/data/hermes.db')
+for row in conn.execute(\"SELECT user_id, text, fire_at, sent, cancelled FROM reminders ORDER BY fire_at DESC LIMIT 20\"):
+    print(row)
+PY
+```
+
+Queued / delivered reminder notifications:
+
+```bash
+docker exec -it infra-pilot-api-1 python - <<'PY'
+import sqlite3
+conn = sqlite3.connect('/app/data/hermes.db')
+for row in conn.execute(\"SELECT user_id, content, created_at, delivered FROM notifications ORDER BY created_at DESC LIMIT 20\"):
+    print(row)
+PY
+```
+
+## PIN auth hardening
+
+Set a PIN in `.env`:
+
+```bash
+PILOT_PIN=choose-a-long-random-pin
+```
+
+Then redeploy:
+
+```bash
+cd ~/hermes-pilot/infra
+docker compose --env-file ../.env -f docker-compose.pilot.yml up -d
+```
+
+### Purpose of PIN auth
+
+PIN auth is a light guard for the pilot phase. It helps when:
+
+- the domain is public but you only want **you** to use the pilot
+- someone discovers the URL before WhatsApp auth exists
+- you want to prevent accidental use and token spend
+- you want to reduce exposure of your private chat history during the pilot
+
+### What it protects today
+
+- `/api/chat`
+- `/api/chat/history`
+- `/api/notifications/poll`
+
+The web UI already has a PIN field at the bottom. When `PILOT_PIN` is set, requests without the correct `X-Pilot-Pin` header are rejected with `401`.
+
 ## Pilot soak
 
 Log daily feedback in `docs/pilot-feedback/YYYY-MM-DD.md`.

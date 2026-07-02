@@ -17,6 +17,7 @@ class Settings:
     pilot_pin: str
     timezone: str
     telegram_bot_token: str
+    telegram_webhook_secret: str
     llm_enabled: bool
 
     @classmethod
@@ -34,5 +35,6 @@ class Settings:
             pilot_pin=os.getenv("PILOT_PIN", ""),
             timezone=os.getenv("TZ", "Asia/Hong_Kong"),
             telegram_bot_token=os.getenv("TELEGRAM_BOT_TOKEN", ""),
+            telegram_webhook_secret=os.getenv("TELEGRAM_WEBHOOK_SECRET", ""),
             llm_enabled=bool(api_key),
         )
