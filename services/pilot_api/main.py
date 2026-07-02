@@ -48,6 +48,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     notifications = NotificationStore(settings.database_path)
 
     app = FastAPI(title="Hermes Pilot", version="0.1.0")
+    app.state.handler = handler
 
     @app.get("/health")
     def health() -> dict[str, str]:
@@ -115,7 +116,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
         user_id = f"telegram-{chat_id}"
         now = datetime.now(ZoneInfo(settings.timezone))
-        outbound = gateway.inject(user_id, pilot_phone_hash(chat_id), text, now)
+        try:
+            outbound = gateway.inject(user_id, pilot_phone_hash(chat_id), text, now)
+        except RuntimeError:
+            outbound = type(
+                "Outbound",
+                (),
+                {"text": "Assistant is temporarily unavailable. Please try again."},
+            )()
         await _send_telegram_reply(settings.telegram_bot_token, chat_id, outbound.text)
         return JSONResponse({"ok": True})
 

@@ -66,6 +66,9 @@ class MessageHandler:
         if reminder:
             return self.reminder_service.format_confirmation(reminder)
 
+        if self.reminder_service.looks_like_reminder_intent(text):
+            return self.reminder_service.clarification_message()
+
         return (
             "I'm not sure how to help with that yet. Try asking for a reminder, "
             'e.g. "Remind me to call mom at 3pm".'

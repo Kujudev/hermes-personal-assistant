@@ -49,6 +49,35 @@ def test_acc_pl_03_cancel_reminder(gateway, user_a, reminder_service):
 
 @pytest.mark.acceptance
 @pytest.mark.phase1
+@freeze_time("2026-07-01 09:00:00", tz_offset=0)
+def test_acc_pl_04_reminder_supports_tonight_by_time(gateway, user_a, reminder_service):
+    outbound = gateway.inject(
+        user_a["user_id"],
+        user_a["phone_hash"],
+        "Remind me to have dinner with friends by tonight 18:45",
+    )
+    assert "Reminder set" in outbound.text
+    reminders = reminder_service.store.list_for_user(user_a["user_id"])
+    assert len(reminders) == 1
+    assert reminders[0].text == "have dinner with friends"
+    assert reminders[0].fire_at.hour == 18
+    assert reminders[0].fire_at.minute == 45
+
+
+@pytest.mark.acceptance
+@pytest.mark.phase1
+@freeze_time("2026-07-01 09:00:00", tz_offset=0)
+def test_acc_pl_05_reminder_asks_clarification_when_time_missing(gateway, user_a, reminder_service):
+    outbound = gateway.inject(
+        user_a["user_id"], user_a["phone_hash"], "Remind me to have dinner with friends tonight"
+    )
+    assert "what time" in outbound.text.lower() or "exact time" in outbound.text.lower()
+    reminders = reminder_service.store.list_for_user(user_a["user_id"])
+    assert reminders == []
+
+
+@pytest.mark.acceptance
+@pytest.mark.phase1
 def test_acc_ux_01_onboarding(gateway, user_a):
     outbound = gateway.inject(user_a["user_id"], user_a["phone_hash"], "Hi")
     assert "👋" in outbound.text

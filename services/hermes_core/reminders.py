@@ -10,10 +10,20 @@ from typing import Iterator
 
 from hermes_core.models import Reminder
 
-REMINDER_CREATE_PATTERN = re.compile(
-    r"remind(?:\s+me)?\s+(?:to\s+)?(.+?)\s+at\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?",
-    re.I,
+REMINDER_CREATE_PATTERNS = (
+    re.compile(
+        r"remind(?:\s+me)?\s+(?:to\s+)?(.+?)\s+(?:at|by)"
+        r"(?:\s+(?:today|tonight|this evening))?\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?",
+        re.I,
+    ),
+    re.compile(
+        r"remind(?:\s+me)?\s+(?:to\s+)?(.+?)\s+"
+        r"(?:today|tonight|this evening)\s+at\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?",
+        re.I,
+    ),
 )
+
+REMINDER_INTENT_PATTERN = re.compile(r"\b(remind|reminder)\b", re.I)
 
 
 def parse_reminder_time(
@@ -140,7 +150,11 @@ class ReminderService:
         self.store = store
 
     def parse_and_create(self, user_id: str, message: str, now: datetime) -> Reminder | None:
-        match = REMINDER_CREATE_PATTERN.search(message)
+        match = None
+        for pattern in REMINDER_CREATE_PATTERNS:
+            match = pattern.search(message)
+            if match:
+                break
         if not match:
             return None
         text = match.group(1).strip()
@@ -149,6 +163,15 @@ class ReminderService:
         meridiem = match.group(4)
         fire_at = parse_reminder_time(hour, minute, meridiem, now)
         return self.store.create(user_id, text, fire_at)
+
+    def looks_like_reminder_intent(self, message: str) -> bool:
+        return bool(REMINDER_INTENT_PATTERN.search(message))
+
+    def clarification_message(self) -> str:
+        return (
+            "I can set that reminder, but I need an exact time. "
+            'Try: "Remind me to have dinner with friends at 6:45pm."'
+        )
 
     def format_confirmation(self, reminder: Reminder) -> str:
         time_label = reminder.fire_at.strftime("%I:%M %p").lstrip("0")

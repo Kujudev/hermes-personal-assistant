@@ -69,3 +69,32 @@ def test_telegram_webhook_requires_configured_secret(tmp_path, monkeypatch):
     )
     assert ok.status_code == 200
     assert ok.json() == {"ok": True}
+
+
+def test_telegram_webhook_degrades_gracefully_when_llm_is_unavailable(tmp_path, monkeypatch):
+    monkeypatch.setenv("DATABASE_PATH", str(tmp_path / "telegram-fallback.db"))
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "123456:telegram-token")
+    monkeypatch.setenv("TELEGRAM_WEBHOOK_SECRET", "telegram-secret")
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "enabled")
+
+    async def fake_send_telegram_reply(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr("pilot_api.main._send_telegram_reply", fake_send_telegram_reply)
+
+    class FailingLLM:
+        def chat(self, user_message, history=None):
+            raise RuntimeError("Assistant is temporarily unavailable. Please try again.")
+
+    settings = Settings.from_env()
+    app = create_app(settings)
+    app.state.handler.llm = FailingLLM()
+    client = TestClient(app)
+
+    res = client.post(
+        "/api/telegram/webhook",
+        json={"message": {"text": "Tell me a joke", "chat": {"id": 42}}},
+        headers={"X-Telegram-Bot-Api-Secret-Token": "telegram-secret"},
+    )
+    assert res.status_code == 200
+    assert res.json() == {"ok": True}

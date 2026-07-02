@@ -60,13 +60,21 @@ class LLMMessageHandler(MessageHandler):
             self._last_tokens_used = self.token_budget.estimate_tokens(text)
             return rule_reply
 
+        if self.reminder_service.looks_like_reminder_intent(text):
+            self._last_tokens_used = self.token_budget.estimate_tokens(text)
+            return self.reminder_service.clarification_message()
+
         history = []
         if self.chat_store:
             history = [
                 {"role": m.role, "content": m.content}
                 for m in self.chat_store.list_recent(user_id, limit=8)
             ]
-        llm_reply = self.llm.chat(text, history=history)
+        try:
+            llm_reply = self.llm.chat(text, history=history)
+        except RuntimeError:
+            self._last_tokens_used = self.token_budget.estimate_tokens(text)
+            return "Assistant is temporarily unavailable. Please try again."
         self._last_tokens_used = llm_reply.tokens_used
         return llm_reply.text
 
