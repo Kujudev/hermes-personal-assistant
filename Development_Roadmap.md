@@ -155,13 +155,13 @@ Each user-facing capability gets a test **before** implementation.
 
 ### 4.1 Deliverables
 
-- [ ] Monorepo layout: `services/`, `tests/`, `infra/`, `docs/`
-- [ ] `docker-compose.dev.yml` — Hermes Agent + SQLite + Redis (minimal)
-- [ ] CI pipeline: lint → unit → guardrail → integration
-- [ ] All **GR-*** guardrail tests written (initially skipped or failing)
-- [ ] Test fixtures: synthetic users, phone hashes, sample messages
-- [ ] WhatsApp gateway **mock/replay** harness for automated E2E without real Meta API in CI
-- [ ] Environment config template (`.env.example`) — no real secrets
+- [x] Monorepo layout: `services/`, `tests/`, `infra/`, `docs/`
+- [x] `docker-compose.dev.yml` — Hermes Agent + SQLite + Redis (minimal)
+- [x] CI pipeline: lint → unit → guardrail → integration
+- [x] All **GR-*** guardrail tests written (initially skipped or failing)
+- [x] Test fixtures: synthetic users, phone hashes, sample messages
+- [x] WhatsApp gateway **mock/replay** harness for automated E2E without real Meta API in CI
+- [x] Environment config template (`.env.example`) — no real secrets
 
 ### 4.2 Exit Criteria (Phase 0 → Phase 1)
 

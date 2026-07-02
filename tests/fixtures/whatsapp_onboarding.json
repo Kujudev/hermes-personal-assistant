@@ -1,0 +1,14 @@
+{
+  "messages": [
+    {
+      "user_id": "pilot-user",
+      "phone_hash": "abc123pilot",
+      "text": "Hi"
+    },
+    {
+      "user_id": "pilot-user",
+      "phone_hash": "abc123pilot",
+      "text": "Remind me to call mom at 3pm"
+    }
+  ]
+}

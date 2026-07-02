@@ -1,0 +1,42 @@
+# Local development stack — Hermes Agent placeholder + supporting services.
+# Hermes Agent image/command will be wired in at Phase 1 pilot deploy.
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Placeholder for Firefly III (Phase 1 finance skills)
+  firefly:
+    image: fireflyiii/core:latest
+    profiles: ["integrations"]
+    ports:
+      - "8080:8080"
+    environment:
+      APP_KEY: "SomeRandomStringOf32CharsExactly"
+      DB_CONNECTION: sqlite
+      DB_DATABASE: /var/www/html/storage/database.sqlite
+    volumes:
+      - firefly_data:/var/www/html/storage
+
+  # Placeholder for NocoDB (Phase 1 shopping lists)
+  nocodb:
+    image: nocodb/nocodb:latest
+    profiles: ["integrations"]
+    ports:
+      - "8081:8080"
+    volumes:
+      - nocodb_data:/usr/app/data
+
+volumes:
+  redis_data:
+  firefly_data:
+  nocodb_data:

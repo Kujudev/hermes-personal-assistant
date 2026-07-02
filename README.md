@@ -2,6 +2,26 @@
 
 Planning repository for a WhatsApp-first personal AI assistant powered by [Hermes Agent](https://github.com/NousResearch/hermes-agent).
 
+## Development
+
+```bash
+pip install -e ".[dev]"
+pytest -v
+docker compose -f docker-compose.dev.yml up -d redis
+```
+
+### Layout
+
+| Path | Description |
+|------|-------------|
+| `services/hermes_core/` | Core assistant services (router, budget, reminders, gateway mock) |
+| `tests/guardrails/` | Architecture guardrail tests (`GR-*`) |
+| `tests/acceptance/` | User-story acceptance tests (`ACC-*`) |
+| `tests/unit/` | Unit tests |
+| `tests/integration/` | Gateway mock and integration tests |
+| `infra/` | Infrastructure notes and future deploy configs |
+| `scripts/check_secrets.sh` | GR-SEC-03 secret scanner |
+
 ## Plans
 
 | Document | Description |
