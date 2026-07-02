@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hermes-core"
+version = "0.1.0"
+description = "Hermes / Aide assistant core services and test harness"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pyjwt>=2.8.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=4.1",
+    "ruff>=0.4",
+    "freezegun>=1.4",
+]
+
+[tool.setuptools.packages.find]
+where = ["services"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["services"]
+markers = [
+    "phase1: requires Phase 1 pilot features",
+    "phase2: requires Phase 2 personal production",
+    "phase3: requires Phase 3 multi-tenant stack",
+    "guardrail: architecture guardrail test",
+    "acceptance: user-story acceptance test",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
