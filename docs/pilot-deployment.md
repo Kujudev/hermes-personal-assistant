@@ -51,10 +51,86 @@ Log daily feedback in `docs/pilot-feedback/YYYY-MM-DD.md`.
 
 ## Troubleshooting
 
+### Port 80/443 already in use
+
+If deploy fails with:
+
+```text
+failed to bind host port 0.0.0.0:80/tcp: address already in use
+```
+
+your server already has another service listening on port 80, 443, or both.
+
+Check what is using those ports:
+
+```bash
+sudo ss -ltnp '( sport = :80 or sport = :443 )'
+```
+
+You have two valid fixes:
+
+#### Option A — let Hermes Caddy own 80/443
+
+Stop the existing web server, then redeploy:
+
+```bash
+sudo systemctl stop nginx || true
+sudo systemctl stop apache2 || true
+cd ~/hermes-pilot/infra
+docker compose -f docker-compose.pilot.yml up -d --build
+```
+
+Use this when `paserver.kujuhk.com` should be dedicated to Hermes.
+
+#### Option B — keep your existing reverse proxy
+
+If you already run Nginx, Apache, or another Caddy on the host, leave it on 80/443 and change `.env`:
+
+```bash
+CADDY_HTTP_BIND=8080
+CADDY_HTTPS_BIND=8443
+PILOT_API_BIND=127.0.0.1:18000
+```
+
+Then redeploy:
+
+```bash
+./scripts/deploy_pilot.sh
+```
+
+Now make your existing reverse proxy forward `paserver.kujuhk.com` to:
+
+```text
+http://127.0.0.1:8080
+```
+
+Example Nginx snippet:
+
+```nginx
+server {
+    server_name paserver.kujuhk.com;
+
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+If you prefer to bypass Hermes Caddy entirely, proxy directly to:
+
+```text
+http://127.0.0.1:18000
+```
+
 | Issue | Fix |
 |-------|-----|
 | SSH auth fails | Verify password/key; ensure `PasswordAuthentication yes` in `sshd_config` |
 | TLS fails | Confirm DNS propagated; check `docker logs infra-caddy-1` |
+| Port 80/443 already in use | Stop the existing listener or set `CADDY_HTTP_BIND=8080` and proxy to `127.0.0.1:8080` |
 | LLM disabled | Set `DEEPSEEK_API_KEY` in `.env` and redeploy |
 | Reminders not firing | Check `docker logs infra-reminder-worker-1` |
 

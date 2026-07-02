@@ -19,6 +19,7 @@ cp .env.example .env   # fill in secrets
 
 - **Web chat:** https://paserver.kujuhk.com (WhatsApp-style UI until WhatsApp API is ready)
 - See [docs/pilot-interfaces.md](./docs/pilot-interfaces.md) and [docs/pilot-deployment.md](./docs/pilot-deployment.md)
+- If port 80/443 is already occupied on your server, see the reverse-proxy fallback in `docs/pilot-deployment.md`
 
 ### Layout
 

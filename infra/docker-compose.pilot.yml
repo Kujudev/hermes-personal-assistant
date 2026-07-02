@@ -7,6 +7,8 @@ services:
       - ../.env
     volumes:
       - pilot_data:/app/data
+    ports:
+      - "${PILOT_API_BIND:-127.0.0.1:18000}:8000"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
@@ -31,8 +33,8 @@ services:
   caddy:
     image: caddy:2-alpine
     ports:
-      - "80:80"
-      - "443:443"
+      - "${CADDY_HTTP_BIND:-80}:80"
+      - "${CADDY_HTTPS_BIND:-443}:443"
     environment:
       PUBLIC_DOMAIN: ${PUBLIC_DOMAIN}
       CADDY_EMAIL: ${CADDY_EMAIL:-internal}
