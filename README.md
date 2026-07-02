@@ -10,6 +10,16 @@ pytest -v
 docker compose -f docker-compose.dev.yml up -d redis
 ```
 
+### Pilot deploy (Phase 1)
+
+```bash
+cp .env.example .env   # fill in secrets
+./scripts/deploy_pilot.sh
+```
+
+- **Web chat:** https://paserver.kujuhk.com (WhatsApp-style UI until WhatsApp API is ready)
+- See [docs/pilot-interfaces.md](./docs/pilot-interfaces.md) and [docs/pilot-deployment.md](./docs/pilot-deployment.md)
+
 ### Layout
 
 | Path | Description |
